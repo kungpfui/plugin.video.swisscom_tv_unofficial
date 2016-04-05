@@ -30,9 +30,7 @@ def prefered_url(channels):
 
     ch = []
     for url, name, language, desc, resolution, thumb in channels:
-        if names.count(name) >= 1 and not url.endswith(':10000'):
-            pass
-        else:
+        if names.count(name) == 1 or url.endswith(':10000'):
             ch.append((url, name, language, desc, resolution, thumb))
     return ch
 
