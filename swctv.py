@@ -8,20 +8,19 @@ Allows to watch unencrypted Swisscom TV video streams with Kodi.
 import sys
 import os
 import urllib, urlparse
-import collections
+#~ import collections
 import sqlite3
 
 import xbmcgui
 import xbmcplugin
 
-base_url = sys.argv[0]
 addon_handle = int(sys.argv[1])
 args = urlparse.parse_qs(sys.argv[2][1:])
 
 xbmcplugin.setContent(addon_handle, 'movies')
 
 def build_url(query):
-    return base_url + '?' + urllib.urlencode(query)
+    return sys.argv[0] + '?' + urllib.urlencode(query)
 
 def prefered_url(channels):
     """remove double entries. prefere urls which use port 10000"""
@@ -40,7 +39,8 @@ def prefered_url(channels):
 
 # the predefined folders
 res_folders = ('SD', 'HD', 'UHD')
-root_folders = collections.OrderedDict()
+root_folders = dict()
+#~ root_folders = collections.OrderedDict()
 root_folders.update((
     ('Language', ('SELECT * FROM swc_tv WHERE language=?', lambda a: a)),
     ('Resolution', ('SELECT * FROM swc_tv WHERE resolution=?', res_folders.index)),
