@@ -101,7 +101,13 @@ def favorites(db, folder, entry):
 
 
 class Cat(object):
+    """simple category class"""
     def __init__(self, show, subfolder, subsubfolder):
+        """c'tor'
+        @param show          boolean, show within root folder
+        @param subfolder     list or sql query
+        @param subsubfolder  tuple
+        """
         self.show = show
         self.subfolder = subfolder
         self.subsubfolder = subsubfolder
@@ -113,17 +119,28 @@ media_folders = dict()
 media_folders.update((
     ('Language', Cat(True,
         "SELECT distinct upper(language) FROM swc_tv where language <> '' ORDER BY language ASC",
-        ('SELECT * FROM swc_tv WHERE language=lower(?)', lambda a: a, resolution_filter, favorites)
+        ('SELECT * FROM swc_tv WHERE language=lower(?)',
+            lambda a: a,
+            resolution_filter,
+            favorites)
         )
     ),
     ('Resolution', Cat(True,
         ('SD', 'HD', 'UHD'),
-        ('SELECT * FROM swc_tv WHERE resolution=?', ('SD', 'HD', 'UHD').index, lambda a: a, favorites)
+        ('SELECT * FROM swc_tv WHERE resolution=?',
+            ('SD', 'HD', 'UHD').index,
+            lambda a: a,
+            favorites)
         )
     ),
     ('Favorites', Cat(False,
         None,
-        ('SELECT * FROM swc_tv WHERE language IN (SELECT lower(entry) FROM swc_fav WHERE folder=? ORDER BY visits DESC LIMIT 1)', lambda a: 'Language', resolution_filter, None)
+        ('''SELECT * FROM swc_tv WHERE language IN (
+                SELECT lower(entry) FROM swc_fav WHERE folder=? ORDER BY visits DESC LIMIT 1
+            )''',
+            lambda a: 'Language',
+            resolution_filter,
+            None)
         )
     ),
 
@@ -142,7 +159,7 @@ if folder is None:
             xbmcplugin.addDirectoryItem(handle=_addon_handle, url=kodi_url,
                                         listitem=kodi_li, isFolder=True)
 
-    # append favorites
+    # append favorite language section
     folder = 'Favorites'
     entry = None
     #~ xbmcplugin.endOfDirectory(_addon_handle)
@@ -150,33 +167,30 @@ if folder is None:
 if folder == 'root':
     # sub folder
     subfolder = media_folders[entry].subfolder
-    if subfolder is None:
-        # redirector to sub-sub-folder
-        folder = entry
-    else:
-        if isinstance(subfolder, str):
-            db = sqlite3.connect(_db_path)
-            subfolder = [d[0] for d in db.execute(subfolder)]
-            db.close()
 
-        for elem in subfolder:
-            kodi_url = build_url({'folder': entry, 'entry': elem})
-            kodi_li = xbmcgui.ListItem(elem, iconImage='DefaultFolder.png')
-            xbmcplugin.addDirectoryItem(handle=_addon_handle, url=kodi_url,
-                                            listitem=kodi_li, isFolder=True)
-        xbmcplugin.endOfDirectory(_addon_handle)
+    if isinstance(subfolder, str):
+        db = sqlite3.connect(_db_path)
+        subfolder = [d[0] for d in db.execute(subfolder)]
+        db.close()
+
+    for elem in subfolder:
+        kodi_url = build_url({'folder': entry, 'entry': elem})
+        kodi_li = xbmcgui.ListItem(elem, iconImage='DefaultFolder.png')
+        xbmcplugin.addDirectoryItem(handle=_addon_handle, url=kodi_url,
+                                        listitem=kodi_li, isFolder=True)
+    xbmcplugin.endOfDirectory(_addon_handle)
 
 if folder in media_folders:
     query, post_action, post_filter, favorites = media_folders[folder].subsubfolder
-    param = post_action(entry)
 
     db = sqlite3.connect(_db_path)
 
+    # update favorites
     if favorites:
         favorites(db, folder, entry)
 
     cur = db.cursor()
-    cur.execute(query, () if param is None else (param,))
+    cur.execute(query, (post_action(entry),))
     for values in post_filter(prefered_url(cur.fetchall())):
         stream_url, name, language, desc, resolution, thumb = values
         if thumb:
