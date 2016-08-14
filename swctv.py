@@ -179,6 +179,7 @@ if folder == 'root':
         xbmcplugin.addDirectoryItem(handle=_addon_handle, url=kodi_url,
                                         listitem=kodi_li, isFolder=True)
     xbmcplugin.endOfDirectory(_addon_handle)
+    xbmc.executebuiltin('Container.SetViewMode(51)')
 
 if folder in media_folders:
     query, post_action, post_filter, favorites = media_folders[folder].subsubfolder
@@ -212,4 +213,5 @@ if folder in media_folders:
         xbmcplugin.addDirectoryItem(handle=_addon_handle, url=stream_url, listitem=kodi_li)
 
     xbmcplugin.endOfDirectory(_addon_handle)
+    xbmc.executebuiltin('Container.SetViewMode(51)')
     db.close()

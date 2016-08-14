@@ -1,1 +1,8 @@
-0.1.0 Initial Release
+0.2.0 (2016-05-28)
+- added automatic "favorite language" selection
+
+0.1.1 (2016-04-15)
+- added "prefered resolution"
+
+0.1.0 (2016-04-06)
+- Initial Release
