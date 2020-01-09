@@ -118,8 +118,8 @@ media_folders = dict()
 #~ media_folders = collections.OrderedDict()
 media_folders.update((
     ('Language', Cat(True,
-        "SELECT distinct upper(language) FROM swc_tv where language <> '' ORDER BY language ASC",
-        ('SELECT * FROM swc_tv WHERE language=lower(?)',
+        "SELECT DISTINCT upper(language) FROM swc_tv WHERE language <> '' ORDER BY language ASC",
+        ('SELECT * FROM swc_tv WHERE language=lower(?) ORDER BY name COLLATE NOCASE ASC',
             lambda a: a,
             resolution_filter,
             favorites)
@@ -127,7 +127,7 @@ media_folders.update((
     ),
     ('Resolution', Cat(True,
         ('SD', 'HD', 'UHD'),
-        ('SELECT * FROM swc_tv WHERE resolution=?',
+        ('SELECT * FROM swc_tv WHERE resolution=? ORDER BY name COLLATE NOCASE ASC',
             ('SD', 'HD', 'UHD').index,
             lambda a: a,
             favorites)
@@ -137,7 +137,7 @@ media_folders.update((
         None,
         ('''SELECT * FROM swc_tv WHERE language IN (
                 SELECT lower(entry) FROM swc_fav WHERE folder=? ORDER BY visits DESC LIMIT 1
-            )''',
+            ) ORDER BY name COLLATE NOCASE ASC''',
             lambda a: 'Language',
             resolution_filter,
             None)

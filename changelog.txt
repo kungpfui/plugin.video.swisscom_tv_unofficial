@@ -1,3 +1,7 @@
+0.2.2 (2020-01-09)
+- updated channel list
+- alphabetic sorted channel list
+
 0.2.1 (2017-11-28)
 - updated channel list
 - removed forced view style "51"
