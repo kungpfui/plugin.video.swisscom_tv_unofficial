@@ -194,10 +194,14 @@ if folder in media_folders:
         favorites(db, folder, entry)
 
     # get interface language
-    desc_lang = xbmc.getLanguage(xbmc.ISO_639_1).lower()
-    #~ desc_lang = __settings__.getSetting("channel_description_language").lower()
-    if desc_lang not in ('en', 'de', 'fr', 'it'):
-        desc_lang = 'en'
+    supported_lang = ('en', 'de', 'fr', 'it')
+    # local override is possible
+    desc_lang = __settings__.getSetting("channel_description_language").lower()
+    if desc_lang not in supported_lang:
+        # use 'default' interface language
+        desc_lang = xbmc.getLanguage(xbmc.ISO_639_1).lower()
+        if desc_lang not in supported_lang:
+            desc_lang = 'en'
 
     cur = db.cursor()
     cur.execute(query.format(lang=desc_lang), (post_action(entry),))
