@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Kodi Plugin - Swisscom TV (unofficial)
 
@@ -15,6 +16,7 @@ import xbmcgui
 import xbmcplugin
 import xbmcaddon
 
+from iso639 import iso639_1
 
 _basedir = os.path.dirname(__file__)
 _db_path = os.path.join(_basedir, u'swctv.db')
@@ -125,11 +127,11 @@ media_folders.update((
                        substr(rest, instr(rest, ',')+1)
                   FROM split
                   WHERE rest <> '')
-            SELECT DISTINCT upper(lang_name)
+            SELECT DISTINCT lang_name
               FROM split
               WHERE lang_name <> ''
               ORDER BY lang_name ASC""",
-        ('SELECT swc_tv.*, swc_desc.{lang} FROM swc_tv LEFT JOIN swc_desc ON swc_tv.name = swc_desc.name WHERE instr(language, lower(?)) ORDER BY name COLLATE NOCASE ASC',
+        ('SELECT swc_tv.*, swc_desc.{lang} FROM swc_tv LEFT JOIN swc_desc ON swc_tv.name = swc_desc.name WHERE instr(language, ?) ORDER BY name COLLATE NOCASE ASC',
             lambda a: a,
             resolution_filter,
             favorites)
@@ -165,7 +167,8 @@ if folder is None:
     for elem in media_folders:
         if media_folders[elem].show:
             kodi_url = build_url({'folder': 'root', 'entry': elem})
-            kodi_li = xbmcgui.ListItem(elem, iconImage='DefaultFolder.png')
+            kodi_li = xbmcgui.ListItem(elem)
+            kodi_li.setArt(dict(icon='DefaultFolder.png'))
             xbmcplugin.addDirectoryItem(handle=_addon_handle, url=kodi_url,
                                         listitem=kodi_li, isFolder=True)
 
@@ -185,7 +188,8 @@ if folder == 'root':
 
     for elem in subfolder:
         kodi_url = build_url({'folder': entry, 'entry': elem})
-        kodi_li = xbmcgui.ListItem(elem, iconImage='DefaultFolder.png')
+        kodi_li = xbmcgui.ListItem(iso639_1.get(elem, elem.upper()))
+        kodi_li.setArt(dict(icon='DefaultFolder.png'))
         xbmcplugin.addDirectoryItem(handle=_addon_handle, url=kodi_url,
                                         listitem=kodi_li, isFolder=True)
     xbmcplugin.endOfDirectory(_addon_handle)
@@ -206,7 +210,7 @@ if folder in media_folders:
     desc_lang = __settings__.getSetting("channel_description_language").lower()
     if desc_lang not in supported_lang:
         # use 'default' interface language
-        desc_lang = xbmc.getLanguage(xbmc.ISO_639_1).lower()
+        desc_lang = xbmc.getLanguage(xbmc.ISO_639_1)
         if desc_lang not in supported_lang:
             desc_lang = 'en'
 
@@ -225,9 +229,11 @@ if folder in media_folders:
                 with open(thumb_path, 'wb') as f:
                     f.write(cur.fetchone()[0])
 
-            kodi_li = xbmcgui.ListItem(name, iconImage=thumb_path, thumbnailImage=thumb_path)
+            kodi_li = xbmcgui.ListItem(name)
+            kodi_li.setArt(dict(icon=thumb_path, thumb=thumb_path))
         else:
-            kodi_li = xbmcgui.ListItem(name, iconImage='DefaultVideo.png')
+            kodi_li = xbmcgui.ListItem(name)
+            kodi_li.setArt(dict(icon='DefaultVideo.png'))
 
         kodi_li.setInfo(type="Video", infoLabels={"Title": name, 'plot': desc})
         xbmcplugin.addDirectoryItem(handle=_addon_handle, url=stream_url, listitem=kodi_li)
