@@ -118,7 +118,17 @@ media_folders = dict()
 #~ media_folders = collections.OrderedDict()
 media_folders.update((
     ('Language', Cat(True,
-        "SELECT DISTINCT upper(language) FROM swc_tv WHERE language <> '' ORDER BY language ASC",
+        """WITH RECURSIVE split(lang_name, rest) AS (
+                SELECT '', language || ',' FROM swc_tv
+                  UNION ALL
+                SELECT substr(rest, 0, instr(rest, ',')),
+                       substr(rest, instr(rest, ',')+1)
+                  FROM split
+                  WHERE rest <> '')
+            SELECT DISTINCT upper(lang_name)
+              FROM split
+              WHERE lang_name <> ''
+              ORDER BY lang_name ASC""",
         ('SELECT swc_tv.*, swc_desc.{lang} FROM swc_tv LEFT JOIN swc_desc ON swc_tv.name = swc_desc.name WHERE instr(language, lower(?)) ORDER BY name COLLATE NOCASE ASC',
             lambda a: a,
             resolution_filter,
@@ -169,11 +179,8 @@ if folder == 'root':
     subfolder = media_folders[entry].subfolder
 
     if isinstance(subfolder, str):
-        tmp = []
         db = sqlite3.connect(_db_path)
-        for d in db.execute(subfolder):
-            tmp += d[0].split(',')
-        subfolder = sorted(set(tmp))
+        subfolder = [d[0] for d in db.execute(subfolder)]
         db.close()
 
     for elem in subfolder:
