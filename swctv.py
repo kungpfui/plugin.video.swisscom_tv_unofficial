@@ -17,6 +17,7 @@ import xbmcplugin
 import xbmcaddon
 
 from iso639 import iso639_1
+from lang import Lang
 
 _basedir = os.path.dirname(__file__)
 _db_path = os.path.join(_basedir, u'swctv.db')
@@ -57,13 +58,13 @@ def word_replace(s, replace):
 def prefered_url(channels):
     """remove double entries. prefere urls which use port 10000"""
     names = []
-    for url, name, language, resolution, thumb, desc in channels:
+    for url, name, language, resolution, desc_id, thumb, desc in channels:
         names.append(name)
 
     ch = []
-    for url, name, language, resolution, thumb, desc in channels:
+    for url, name, language, resolution, desc_id, thumb, desc in channels:
         if names.count(name) == 1 or url.endswith(':10000'):
-            ch.append((url, name, language, resolution, thumb, desc))
+            ch.append((url, name, language, resolution, desc_id, thumb, desc))
     return ch
 
 
@@ -72,11 +73,11 @@ def resolution_filter(channels):
     pref_res = __settings__.getSetting("prefered_resolution")
 
     names = []
-    for url, name, language, resolution, thumb, desc in channels:
+    for url, name, language, resolution, desc_id, thumb, desc in channels:
         names.append(name.lower())
 
     ch = []
-    for url, name, language, resolution, thumb, desc in channels:
+    for url, name, language, resolution, desc_id, thumb, desc in channels:
         if pref_res == 'SD' and resolution != 0:
             found = word_replace(name.lower(), ('hd', 'uhd', '4k', '4k1'))
             if found in names:
@@ -90,9 +91,8 @@ def resolution_filter(channels):
             if found in names:
                 continue
 
-        ch.append((url, name, language, resolution, thumb, desc))
+        ch.append((url, name, language, resolution, desc_id, thumb, desc))
     return ch
-
 
 def favorites(db, folder, entry):
     if entry is not None:
@@ -121,7 +121,7 @@ media_folders = dict()
 media_folders.update((
     ('Language', Cat(True,
         """WITH RECURSIVE split(lang_name, rest) AS (
-                SELECT '', language || ',' FROM swc_tv
+                SELECT '', swc_tv.language || ',' FROM swc_tv
                   UNION ALL
                 SELECT substr(rest, 0, instr(rest, ',')),
                        substr(rest, instr(rest, ',')+1)
@@ -131,7 +131,7 @@ media_folders.update((
               FROM split
               WHERE lang_name <> ''
               ORDER BY lang_name ASC""",
-        ('SELECT swc_tv.*, swc_desc.{lang} FROM swc_tv LEFT JOIN swc_desc ON swc_tv.name = swc_desc.name WHERE instr(language, ?) ORDER BY name COLLATE NOCASE ASC',
+        ('SELECT swc_tv.*, swc_desc.{lang} FROM swc_tv LEFT JOIN swc_desc ON swc_tv.desc_id = swc_desc.id WHERE instr(language, ?) ORDER BY name COLLATE NOCASE ASC',
             lambda a: a,
             resolution_filter,
             favorites)
@@ -139,7 +139,7 @@ media_folders.update((
     ),
     ('Resolution', Cat(True,
         ('SD', 'HD', 'UHD'),
-        ('SELECT swc_tv.*, swc_desc.{lang} FROM swc_tv LEFT JOIN swc_desc ON swc_tv.name = swc_desc.name WHERE resolution=? ORDER BY name COLLATE NOCASE ASC',
+        ('SELECT swc_tv.*, swc_desc.{lang} FROM swc_tv LEFT JOIN swc_desc ON swc_tv.desc_id = swc_desc.id WHERE resolution=? ORDER BY name COLLATE NOCASE ASC',
             ('SD', 'HD', 'UHD').index,
             lambda a: a,
             favorites)
@@ -147,7 +147,7 @@ media_folders.update((
     ),
     ('Favorites', Cat(False,
         None,
-        ('''SELECT swc_tv.*, swc_desc.{lang} FROM swc_tv LEFT JOIN swc_desc ON swc_tv.name = swc_desc.name WHERE language IN (
+        ('''SELECT swc_tv.*, swc_desc.{lang} FROM swc_tv LEFT JOIN swc_desc ON swc_tv.desc_id = swc_desc.id WHERE language IN (
                 SELECT lower(entry) FROM swc_fav WHERE folder=? ORDER BY visits DESC LIMIT 1
             ) ORDER BY name COLLATE NOCASE ASC''',
             lambda a: 'Language',
@@ -162,12 +162,15 @@ media_folders.update((
 folder = _args.get('folder', [None])[0]
 entry = _args.get('entry', [None])[0]
 
+# get interface language
+lang = Lang(__settings__)
+
 if folder is None:
     # root folder
     for elem in media_folders:
         if media_folders[elem].show:
             kodi_url = build_url({'folder': 'root', 'entry': elem})
-            kodi_li = xbmcgui.ListItem(elem)
+            kodi_li = xbmcgui.ListItem(lang.translate(elem))
             kodi_li.setArt(dict(icon='DefaultFolder.png'))
             xbmcplugin.addDirectoryItem(handle=_addon_handle, url=kodi_url,
                                         listitem=kodi_li, isFolder=True)
@@ -204,20 +207,11 @@ if folder in media_folders:
     if favorites:
         favorites(db, folder, entry)
 
-    # get interface language
-    supported_lang = ('en', 'de', 'fr', 'it')
-    # local override is possible
-    desc_lang = __settings__.getSetting("channel_description_language").lower()
-    if desc_lang not in supported_lang:
-        # use 'default' interface language
-        desc_lang = xbmc.getLanguage(xbmc.ISO_639_1)
-        if desc_lang not in supported_lang:
-            desc_lang = 'en'
-
     cur = db.cursor()
-    cur.execute(query.format(lang=desc_lang), (post_action(entry),))
+    cur.execute(query.format(lang=lang), (post_action(entry),))
     for values in post_filter(prefered_url(cur.fetchall())):
-        stream_url, name, language, resolution, thumb, desc = values
+        stream_url, name, language, resolution, desc_id, thumb, desc = values
+
         if thumb:
             thumb_path = os.path.join(_basedir, 'resources', 'media', thumb)
             if not os.path.exists(thumb_path):
