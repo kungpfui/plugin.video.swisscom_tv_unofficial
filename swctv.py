@@ -138,7 +138,7 @@ media_folders.update((
         )
     ),
     ('Resolution', Cat(True,
-        (('SD', 'SD: Standard Definition'), ('HD', 'HD: High Definition'), ('UHD', 'UHD: Ultra High Definition')),
+        (('SD', 'SD: 720 x 576'), ('HD', 'HD: 1280 x 720 / 1920 x 1080'), ('UHD', 'UHD: 3840 x 2160')),
         ('SELECT swc_tv.*, swc_desc.{lang} FROM swc_tv LEFT JOIN swc_desc ON swc_tv.desc_id = swc_desc.id WHERE resolution=? ORDER BY name COLLATE NOCASE ASC',
             ('SD', 'HD', 'UHD').index,
             lambda a: a,
