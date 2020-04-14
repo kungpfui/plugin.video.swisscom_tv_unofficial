@@ -130,7 +130,7 @@ media_folders.update((
             SELECT DISTINCT lang_key, lang_text
               FROM split
               WHERE lang_key <> '' AND lang_text NOTNULL
-              ORDER BY lang_text ASC""",
+              ORDER BY lang_key='{lang}' DESC, lang_text ASC""",
         ('SELECT swc_tv.*, swc_desc.{lang} FROM swc_tv LEFT JOIN swc_desc ON swc_tv.desc_id = swc_desc.id WHERE instr(language, ?) ORDER BY name COLLATE NOCASE ASC',
             lambda a: a,
             resolution_filter,
