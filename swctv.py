@@ -16,7 +16,6 @@ import xbmcgui
 import xbmcplugin
 import xbmcaddon
 
-from iso639 import iso639_1
 from lang import Lang
 
 _basedir = os.path.dirname(__file__)
@@ -120,17 +119,18 @@ media_folders = dict()
 #~ media_folders = collections.OrderedDict()
 media_folders.update((
     ('Language', Cat(True,
-        """WITH RECURSIVE split(lang_name, rest) AS (
-                SELECT '', swc_tv.language || ',' FROM swc_tv
+        """WITH RECURSIVE split(lang_text, lang_key, rest) AS (
+                SELECT iso639_1.{lang}, '', swc_tv.language || ',' FROM swc_tv LEFT JOIN iso639_1 ON swc_tv.language=iso639_1.key
                   UNION ALL
-                SELECT substr(rest, 0, instr(rest, ',')),
+                SELECT lang_text,
+                       substr(rest, 0, instr(rest, ',')),
                        substr(rest, instr(rest, ',')+1)
                   FROM split
                   WHERE rest <> '')
-            SELECT DISTINCT lang_name
+            SELECT DISTINCT lang_key, lang_text
               FROM split
-              WHERE lang_name <> ''
-              ORDER BY lang_name ASC""",
+              WHERE lang_key <> '' AND lang_text NOTNULL
+              ORDER BY lang_text ASC""",
         ('SELECT swc_tv.*, swc_desc.{lang} FROM swc_tv LEFT JOIN swc_desc ON swc_tv.desc_id = swc_desc.id WHERE instr(language, ?) ORDER BY name COLLATE NOCASE ASC',
             lambda a: a,
             resolution_filter,
@@ -138,7 +138,7 @@ media_folders.update((
         )
     ),
     ('Resolution', Cat(True,
-        ('SD', 'HD', 'UHD'),
+        (('SD', 'SD: Standard Definition'), ('HD', 'HD: High Definition'), ('UHD', 'UHD: Ultra High Definition')),
         ('SELECT swc_tv.*, swc_desc.{lang} FROM swc_tv LEFT JOIN swc_desc ON swc_tv.desc_id = swc_desc.id WHERE resolution=? ORDER BY name COLLATE NOCASE ASC',
             ('SD', 'HD', 'UHD').index,
             lambda a: a,
@@ -165,6 +165,17 @@ entry = _args.get('entry', [None])[0]
 # get interface language
 lang = Lang(__settings__)
 
+def iso639_1(value):
+    global lang
+
+    cur = db.cursor()
+    cur.execute("SELECT {lang} FROM iso639_1 WHERE key=?".format(lang=lang), (value,))
+    try:
+        return cur.fetchone()[0]
+    except:
+        return value.upper()
+
+
 if folder is None:
     # root folder
     for elem in media_folders:
@@ -186,12 +197,12 @@ if folder == 'root':
 
     if isinstance(subfolder, str):
         db = sqlite3.connect(_db_path)
-        subfolder = [d[0] for d in db.execute(subfolder)]
+        subfolder = [d for d in db.execute(subfolder.format(lang=lang))]
         db.close()
 
-    for elem in subfolder:
+    for elem, text in subfolder:
         kodi_url = build_url({'folder': entry, 'entry': elem})
-        kodi_li = xbmcgui.ListItem(iso639_1.get(elem, elem.upper()))
+        kodi_li = xbmcgui.ListItem(text)
         kodi_li.setArt(dict(icon='DefaultFolder.png'))
         xbmcplugin.addDirectoryItem(handle=_addon_handle, url=kodi_url,
                                         listitem=kodi_li, isFolder=True)
