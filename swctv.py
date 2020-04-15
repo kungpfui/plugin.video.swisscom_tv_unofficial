@@ -8,9 +8,12 @@ Allows to watch unencrypted Swisscom TV video streams with Kodi.
 
 import sys
 import os
-import urllib
-import urlparse
 import sqlite3
+try:
+	from urlparse import parse_qs
+	from urllib import urlencode
+except ImportError:
+	from urllib.parse import parse_qs, urlencode
 
 import xbmcgui
 import xbmcplugin
@@ -22,7 +25,7 @@ _basedir = os.path.dirname(__file__)
 _db_path = os.path.join(_basedir, u'swctv.db')
 
 _addon_handle = int(sys.argv[1])
-_args = urlparse.parse_qs(sys.argv[2][1:])
+_args = parse_qs(sys.argv[2][1:])
 
 __settings__ = xbmcaddon.Addon(id='plugin.video.swisscom_tv_unofficial')
 xbmcplugin.setContent(_addon_handle, 'movies')
@@ -30,7 +33,7 @@ xbmcplugin.setContent(_addon_handle, 'movies')
 
 def build_url(query):
     """build url by query"""
-    return sys.argv[0] + '?' + urllib.urlencode(query)
+    return sys.argv[0] + '?' + urlencode(query)
 
 
 def word_replace(s, replace):
@@ -115,9 +118,7 @@ class Cat(object):
 
 
 # the predefined folders
-media_folders = dict()
-#~ media_folders = collections.OrderedDict()
-media_folders.update((
+media_folders = dict((
     ('Language', Cat(True,
         """WITH RECURSIVE split(lang_text, lang_key, rest) AS (
                 SELECT iso639_1.{lang}, '', swc_tv.language || ',' FROM swc_tv LEFT JOIN iso639_1 ON swc_tv.language=iso639_1.key
@@ -131,7 +132,10 @@ media_folders.update((
               FROM split
               WHERE lang_key <> '' AND lang_text NOTNULL
               ORDER BY lang_key='{lang}' DESC, lang_text ASC""",
-        ('SELECT swc_tv.*, swc_desc.{lang} FROM swc_tv LEFT JOIN swc_desc ON swc_tv.desc_id = swc_desc.id WHERE instr(language, ?) ORDER BY name COLLATE NOCASE ASC',
+        ("""SELECT swc_tv.*, swc_desc.{lang}
+                FROM swc_tv LEFT JOIN swc_desc ON swc_tv.desc_id = swc_desc.id
+                WHERE instr(language, ?)
+                ORDER BY name COLLATE NOCASE ASC""",
             lambda a: a,
             resolution_filter,
             favorites)
@@ -139,7 +143,10 @@ media_folders.update((
     ),
     ('Resolution', Cat(True,
         (('SD', 'SD: 720 x 576'), ('HD', 'HD: 1280 x 720 / 1920 x 1080'), ('UHD', 'UHD: 3840 x 2160')),
-        ('SELECT swc_tv.*, swc_desc.{lang} FROM swc_tv LEFT JOIN swc_desc ON swc_tv.desc_id = swc_desc.id WHERE resolution=? ORDER BY name COLLATE NOCASE ASC',
+        ("""SELECT swc_tv.*, swc_desc.{lang}
+                FROM swc_tv LEFT JOIN swc_desc ON swc_tv.desc_id = swc_desc.id
+                WHERE resolution=?
+                ORDER BY name COLLATE NOCASE ASC""",
             ('SD', 'HD', 'UHD').index,
             lambda a: a,
             favorites)
@@ -147,9 +154,13 @@ media_folders.update((
     ),
     ('Favorites', Cat(False,
         None,
-        ('''SELECT swc_tv.*, swc_desc.{lang} FROM swc_tv LEFT JOIN swc_desc ON swc_tv.desc_id = swc_desc.id WHERE language IN (
-                SELECT lower(entry) FROM swc_fav WHERE folder=? ORDER BY visits DESC LIMIT 1
-            ) ORDER BY name COLLATE NOCASE ASC''',
+        ('''SELECT swc_tv.*, swc_desc.{lang}
+                FROM swc_tv LEFT JOIN swc_desc
+                ON swc_tv.desc_id = swc_desc.id
+                WHERE language IN (
+                    SELECT lower(entry) FROM swc_fav WHERE folder=? ORDER BY visits DESC LIMIT 1
+                )
+                ORDER BY name COLLATE NOCASE ASC''',
             lambda a: 'Language',
             resolution_filter,
             None)
@@ -183,8 +194,7 @@ if folder is None:
             kodi_url = build_url({'folder': 'root', 'entry': elem})
             kodi_li = xbmcgui.ListItem(lang.translate(elem))
             kodi_li.setArt(dict(icon='DefaultFolder.png'))
-            xbmcplugin.addDirectoryItem(handle=_addon_handle, url=kodi_url,
-                                        listitem=kodi_li, isFolder=True)
+            xbmcplugin.addDirectoryItem(handle=_addon_handle, url=kodi_url, listitem=kodi_li, isFolder=True)
 
     # append favorite language section
     folder = 'Favorites'
@@ -204,8 +214,7 @@ if folder == 'root':
         kodi_url = build_url({'folder': entry, 'entry': elem})
         kodi_li = xbmcgui.ListItem(text)
         kodi_li.setArt(dict(icon='DefaultFolder.png'))
-        xbmcplugin.addDirectoryItem(handle=_addon_handle, url=kodi_url,
-                                        listitem=kodi_li, isFolder=True)
+        xbmcplugin.addDirectoryItem(handle=_addon_handle, url=kodi_url, listitem=kodi_li, isFolder=True)
     xbmcplugin.endOfDirectory(_addon_handle)
 
 
