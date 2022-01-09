@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
-    <category label="31000">
-      <setting id="prefered_resolution" type="select" label="31001" values="SD|HD|UHD" default="HD"/>
-      <setting id="channel_description_language" type="select" label="31002" values="Default|EN|DE|FR|IT" default="Default"/>
+    <category label="30000">
+      <setting id="prefered_resolution" type="select" label="30001" values="SD|HD|UHD" default="HD"/>
+      <setting id="channel_description_language" type="select" label="30002" values="Default|EN|DE|FR|IT" default="Default"/>
     </category>
 </settings>
