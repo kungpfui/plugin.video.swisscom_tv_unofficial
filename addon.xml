@@ -16,6 +16,10 @@
         <assets>
 			<icon>resources/icon.png</icon>
 		</assets>
+        <news>0.4.2 (2022-01-15)
+           - Filename encoding fix
+           - Small channel list update
+        </news>
         <news>0.4.1 (2022-01-09)
            - Channel list update
         </news>
