@@ -40,7 +40,7 @@ def download_logos(channel_list, dir=os.curdir, resolution=256):
 	channels = js['channels']
 	for key in channels:
 		imageurl = "{logo}".format(**channels[key]).format(resolution=f'W{resolution}', fileType='png')
-		filename = channels[key]['title'].lower().replace('/', '_').replace(':', '_') + '.png'
+		filename = channels[key]['title'].lower().replace('/', '_').replace(':', '_').encode('ascii', 'ignore').decode() + '.png'
 
 		imagepath = os.path.join(dir, filename)
 		if not os.path.exists(imagepath):

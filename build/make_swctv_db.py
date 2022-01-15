@@ -86,7 +86,7 @@ def insert_into(swc, url, name, res: int, key):
 	global packages
 
 	try:
-		image_path = swc['title'].lower().replace('/', '_').replace(':', '_') + '.png'
+		image_path = swc['title'].lower().replace('/', '_').replace(':', '_').encode('ascii', 'ignore').decode() + '.png'
 		desc = swc['description']
 		row = (url, name, ','.join(swc.get('lang')), res, key, image_path)
 		db.execute(u"INSERT INTO swc_tv VALUES({0})".format(sql_qlist(row)), row)

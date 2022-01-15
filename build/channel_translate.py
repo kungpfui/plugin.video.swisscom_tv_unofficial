@@ -29,7 +29,7 @@ channels = {
   'Clubland': 'Clubland TV',
   'CNBC EU': 'CNBC UK',
   'CNN International': 'CNN',
-  #~ 'DEUTSCHE WELLE En': 'DW',
+  'DEUTSCHE WELLE En': 'DW Englisch',
   'Film4': 'Film Four',
   'i24 NEWS F': 'i24 News Français',
   'i24 NEWS E': 'i24 News',
@@ -233,9 +233,11 @@ channels = {
   'MEDIASET TOP crime': 'Top Crime',
   'MEDIASET Cine34': 'Cine34',
   'MEDIASET TGCOM24': 'TGCom24',
+  'MEDIASET LA5': 'La5',
   'TELECLUB zoom D': 'blue Zoom D',
   'TELECLUB zoom F': 'blue Zoom F',
   'TELECLUB zoom I': 'blue Zoom I',
+  'BaernSPORT': 'BärnSPORT',
 
   ## UHD
   'RTS 1 FullHD': 'RTS un',
