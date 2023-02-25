@@ -137,12 +137,8 @@ for residx, resolution in enumerate(resolutions):
 		if mobj:
 			info = mobj.group(1).strip()
 			# get rid of some strange "iptv-ch.github.io" string parts
-			info = info.replace(' CH', '')
-			info = info.replace(' (alb)', '')
-			info = info.replace(' (bos)', '')
-			info = info.replace(' (rus)', '')
-			info = info.replace(' (ara)', '')
-			info = info.replace(' (spa)', '')
+			for cancel in (' CH', ' (alb)', ' (bos)', ' (rus)', ' (ara)', ' (spa)', ' (deu)',  ' (svn)', ' (fra/eng)', 'Discovery-italia '):
+				info = info.replace(cancel, '')
 
 			if info.endswith(' HD'):
 				info = info[:-3]
