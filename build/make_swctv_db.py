@@ -131,6 +131,7 @@ def find_named_channel(name, url, residx: int):
 
 
 re_info = re.compile(r'#EXTINF:-1\s*.*?,(.+)')
+re_iptv_replace = re.compile(r' \(.+\)')  # like ' (fra/eng)'
 info = None
 
 resolutions = ('sd', 'hd', 'uhd')
@@ -141,8 +142,8 @@ for residx, resolution in enumerate(resolutions):
         if mobj:
             info = mobj.group(1).strip()
             # get rid of some strange "iptv-ch.github.io" string parts
-            for cancel in (' CH', ' (alb)', ' (bos)', ' (rus)', ' (ara)', ' (spa)', ' (deu)', ' (svn)', ' (fra/eng)',
-                           'Discovery-italia '):
+            info = re_iptv_replace.sub('', info)
+            for cancel in (' CH', 'Discovery-italia ', 'Warner Bros Discovery ', 'Warner Bros. Discovery '):
                 info = info.replace(cancel, '')
 
             if info.endswith(' HD'):
