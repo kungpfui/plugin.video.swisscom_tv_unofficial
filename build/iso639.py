@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 """
 reduced iso639-1 table
 """
-
 
 iso639_1 = {
     'aa': 'Afar',
@@ -143,7 +141,8 @@ iso639_1 = {
     'ps': 'Pushto, Pashto',
     'qu': 'Quechua',
     'rm': ('Romansh', 'Rätoromanisch', 'Romanche', 'Romancio'),
-    'ro': ('Romanian, Moldavian, Moldovan', 'Rumänisch, Moldawisch, Moldauisch', 'Roumain, Moldavien', 'Rumeno, Moldavo'),
+    'ro': ('Romanian, Moldavian, Moldovan', 'Rumänisch, Moldawisch, Moldauisch', 'Roumain, Moldavien',
+           'Rumeno, Moldavo'),
     'rn': 'Rundi',
     'ru': ('Russian', 'Russisch', 'Russe', 'Russo'),
     'sg': 'Sango',

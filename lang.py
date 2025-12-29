@@ -1,16 +1,14 @@
-# -*- coding: utf-8 -*-
-
-
 _translate = {
-  'Language': dict(en='Language', de='Sprache', fr='Langue', it='Lingua'),
-  'Resolution': dict(en='Resolution', de='Auflösung', fr='Résolution', it='Risoluzione'),
+    'Language': dict(en='Language', de='Sprache', fr='Langue', it='Lingua'),
+    'Resolution': dict(en='Resolution', de='Auflösung', fr='Résolution', it='Risoluzione'),
 }
-
 
 import xbmc
 
+
 class Lang:
     supported_lang = ('en', 'de', 'fr', 'it')
+
     def __init__(self, settings):
         """
         :return: iso639-1 language identification

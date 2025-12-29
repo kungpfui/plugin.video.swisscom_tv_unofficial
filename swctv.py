@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Kodi Plugin - Swisscom TV (unofficial)
 
@@ -9,11 +8,12 @@ Allows to watch unencrypted Swisscom TV video streams with Kodi.
 import sys
 import os
 import sqlite3
+
 try:
-	from urlparse import parse_qs
-	from urllib import urlencode
+    from urlparse import parse_qs
+    from urllib import urlencode
 except ImportError:
-	from urllib.parse import parse_qs, urlencode
+    from urllib.parse import parse_qs, urlencode
 
 import xbmcgui
 import xbmcplugin
@@ -96,16 +96,21 @@ def resolution_filter(channels):
         ch.append((url, name, language, resolution, desc_id, thumb, desc))
     return ch
 
+
 def favorites(db, folder, entry):
     if entry is not None:
         dbname = 'swc_fav'
         with db:
-            db.execute('''UPDATE OR IGNORE {dbname} SET visits=visits+1 WHERE folder=? AND entry=?'''.format(dbname=dbname), (folder,entry));
-            db.execute('''INSERT OR IGNORE INTO {dbname} (folder,entry,visits) VALUES(?,?,1)'''.format(dbname=dbname), (folder,entry));
+            db.execute(
+                '''UPDATE OR IGNORE {dbname} SET visits=visits+1 WHERE folder=? AND entry=?'''.format(dbname=dbname),
+                (folder, entry));
+            db.execute('''INSERT OR IGNORE INTO {dbname} (folder,entry,visits) VALUES(?,?,1)'''.format(dbname=dbname),
+                       (folder, entry));
 
 
 class Cat(object):
     """simple category class"""
+
     def __init__(self, show, subfolder, subsubfolder):
         """c'tor'
         @param show          boolean, show within root folder
@@ -120,61 +125,61 @@ class Cat(object):
 # the predefined folders
 media_folders = dict((
     ('Language', Cat(True,
-        """WITH RECURSIVE split(lang_text, lang_key, rest) AS (
-                SELECT iso639_1.{lang}, '', swc_tv.language || ',' FROM swc_tv LEFT JOIN iso639_1 ON swc_tv.language=iso639_1.key
-                  UNION ALL
-                SELECT lang_text,
-                       substr(rest, 0, instr(rest, ',')),
-                       substr(rest, instr(rest, ',')+1)
-                  FROM split
-                  WHERE rest <> '')
-            SELECT DISTINCT lang_key, lang_text
-              FROM split
-              WHERE lang_key <> '' AND lang_text NOTNULL
-              ORDER BY lang_key='{lang}' DESC, lang_text ASC""",
-        ("""SELECT swc_tv.*, swc_desc.{lang}
+                     """WITH RECURSIVE split(lang_text, lang_key, rest) AS (
+                             SELECT iso639_1.{lang}, '', swc_tv.language || ',' FROM swc_tv LEFT JOIN iso639_1 ON swc_tv.language=iso639_1.key
+                               UNION ALL
+                             SELECT lang_text,
+                                    substr(rest, 0, instr(rest, ',')),
+                                    substr(rest, instr(rest, ',')+1)
+                               FROM split
+                               WHERE rest <> '')
+                         SELECT DISTINCT lang_key, lang_text
+                           FROM split
+                           WHERE lang_key <> '' AND lang_text NOTNULL
+                           ORDER BY lang_key='{lang}' DESC, lang_text ASC""",
+                     ("""SELECT swc_tv.*, swc_desc.{lang}
                 FROM swc_tv LEFT JOIN swc_desc ON swc_tv.desc_id = swc_desc.id
                 WHERE instr(language, ?)
                 ORDER BY name COLLATE NOCASE ASC""",
-            lambda a: a,
-            resolution_filter,
-            favorites)
-        )
-    ),
+                      lambda a: a,
+                      resolution_filter,
+                      favorites)
+                     )
+     ),
     ('Resolution', Cat(True,
-        (('SD', 'SD: 720 x 576'), ('HD', 'HD: 1280 x 720 / 1920 x 1080'), ('UHD', 'UHD: 3840 x 2160')),
-        ("""SELECT swc_tv.*, swc_desc.{lang}
+                       (('SD', 'SD: 720 x 576'), ('HD', 'HD: 1280 x 720 / 1920 x 1080'), ('UHD', 'UHD: 3840 x 2160')),
+                       ("""SELECT swc_tv.*, swc_desc.{lang}
                 FROM swc_tv LEFT JOIN swc_desc ON swc_tv.desc_id = swc_desc.id
                 WHERE resolution=?
                 ORDER BY name COLLATE NOCASE ASC""",
-            ('SD', 'HD', 'UHD').index,
-            lambda a: a,
-            favorites)
-        )
-    ),
+                        ('SD', 'HD', 'UHD').index,
+                        lambda a: a,
+                        favorites)
+                       )
+     ),
     ('Favorites', Cat(False,
-        None,
-        ('''SELECT swc_tv.*, swc_desc.{lang}
+                      None,
+                      ('''SELECT swc_tv.*, swc_desc.{lang}
                 FROM swc_tv LEFT JOIN swc_desc
                 ON swc_tv.desc_id = swc_desc.id
                 WHERE language IN (
                     SELECT lower(entry) FROM swc_fav WHERE folder=? ORDER BY visits DESC LIMIT 1
                 )
                 ORDER BY name COLLATE NOCASE ASC''',
-            lambda a: 'Language',
-            resolution_filter,
-            None)
-        )
-    ),
+                       lambda a: 'Language',
+                       resolution_filter,
+                       None)
+                      )
+     ),
 
 ))
-
 
 folder = _args.get('folder', [None])[0]
 entry = _args.get('entry', [None])[0]
 
 # get interface language
 lang = Lang(__settings__)
+
 
 def iso639_1(value):
     global lang
@@ -199,7 +204,7 @@ if folder is None:
     # append favorite language section
     folder = 'Favorites'
     entry = None
-    #~ xbmcplugin.endOfDirectory(_addon_handle)
+    # ~ xbmcplugin.endOfDirectory(_addon_handle)
 
 if folder == 'root':
     # sub folder
@@ -216,7 +221,6 @@ if folder == 'root':
         kodi_li.setArt(dict(icon='DefaultFolder.png'))
         xbmcplugin.addDirectoryItem(handle=_addon_handle, url=kodi_url, listitem=kodi_li, isFolder=True)
     xbmcplugin.endOfDirectory(_addon_handle)
-
 
 if folder in media_folders:
     query, post_action, post_filter, favorites = media_folders[folder].subsubfolder
